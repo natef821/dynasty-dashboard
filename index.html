@@ -1516,472 +1516,540 @@ function DraftCapital({ data, derived }) {
 }
 
 
-// ============ GALAXY (3D SIMILARITY MATRIX) ============
-const POS_HEX = { QB: 0xef4444, RB: 0x10b981, WR: 0x3b82f6, TE: 0xf97316 };
+// ============ GALAXY (3D SIMILARITY MATRIX — FULL ROSTER + FA) ============
+const POS_HEX = { QB: 0xef4444, RB: 0x10b981, WR: 0x3b82f6, TE: 0xf97316, K: 0x8b5cf6, DEF: 0x64748b };
+const POS_COLOR_CSS = { QB: '#ef4444', RB: '#10b981', WR: '#3b82f6', TE: '#f97316', K: '#8b5cf6', DEF: '#64748b' };
 
+function _dot(a, b) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]*b[i]; return s; }
+function _norm(v) { var l = Math.sqrt(_dot(v,v)); return l > 1e-9 ? v.map(function(x){return x/l;}) : v.map(function(){return 0;}); }
+function _matVec(M, v) { return M.map(function(r){return _dot(r,v);}); }
 
-function _dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]*b[i]; return s; }
-function _norm(v) { const l = Math.sqrt(_dot(v,v)); return l > 1e-9 ? v.map(x => x/l) : v.map(()=>0); }
-function _matVec(M, v) { return M.map(r => _dot(r, v)); }
-
-
-// PCA → top-3 components via power iteration with deflation
 function pca3d(data) {
-  const n = data.length;
+  var n = data.length;
   if (n === 0) return [];
-  const d = data[0].length;
-  // Center features
-  const mean = new Array(d).fill(0);
-  for (const v of data) for (let i = 0; i < d; i++) mean[i] += v[i]/n;
-  const X = data.map(v => v.map((x,i) => x - mean[i]));
-  // Covariance
-  const C = Array.from({length: d}, () => new Array(d).fill(0));
-  for (const v of X) for (let i = 0; i < d; i++) for (let j = 0; j < d; j++) C[i][j] += v[i]*v[j]/(n-1 || 1);
-  // Power iteration ×3 with deflation
-  const Cd = C.map(r => [...r]);
-  const comps = [];
-  for (let k = 0; k < 3; k++) {
-    let v = _norm(new Array(d).fill(0).map((_,i) => Math.sin(k*7+i*13)+Math.cos(k*3+i*5)));
-    for (let it = 0; it < 80; it++) {
-      const nv = _norm(_matVec(Cd, v));
-      if (Math.abs(_dot(nv, v)) > 0.9999) { v = nv; break; }
+  var d = data[0].length;
+  var mean = new Array(d).fill(0);
+  for (var i = 0; i < n; i++) for (var j = 0; j < d; j++) mean[j] += data[i][j]/n;
+  var X = data.map(function(v){ return v.map(function(x,i){return x - mean[i];}); });
+  var C = Array.from({length:d}, function(){ return new Array(d).fill(0); });
+  for (var i = 0; i < n; i++) for (var j = 0; j < d; j++) for (var k = 0; k < d; k++) C[j][k] += X[i][j]*X[i][k]/(n-1||1);
+  var Cd = C.map(function(r){return [...r];});
+  var comps = [];
+  for (var ci = 0; ci < 3; ci++) {
+    var v = _norm(new Array(d).fill(0).map(function(_,i){return Math.sin(ci*7+i*13)+Math.cos(ci*3+i*5);}));
+    for (var it = 0; it < 120; it++) {
+      var nv = _norm(_matVec(Cd, v));
+      if (Math.abs(_dot(nv,v)) > 0.99999) { v = nv; break; }
       v = nv;
     }
     comps.push(v);
-    const lam = _dot(v, _matVec(Cd, v));
-    for (let i = 0; i < d; i++) for (let j = 0; j < d; j++) Cd[i][j] -= lam*v[i]*v[j];
+    var lam = _dot(v, _matVec(Cd, v));
+    for (var j = 0; j < d; j++) for (var k = 0; k < d; k++) Cd[j][k] -= lam*v[j]*v[k];
   }
-  return X.map(v => comps.map(c => _dot(v, c)));
+  return X.map(function(v){ return comps.map(function(c){return _dot(v,c);}); });
 }
 
-
-// Build feature vector per player. Position dimensions are weighted higher
-// so positional clusters emerge clearly, with age/value/exp as sub-axes.
 function buildFeatures(player, isSuperflex) {
-  const POS_WEIGHT = 4;
-  const qb = (player.pos === 'QB' ? 1 : 0) * POS_WEIGHT;
-  const rb = (player.pos === 'RB' ? 1 : 0) * POS_WEIGHT;
-  const wr = (player.pos === 'WR' ? 1 : 0) * POS_WEIGHT;
-  const te = (player.pos === 'TE' ? 1 : 0) * POS_WEIGHT;
-  const age = Math.max(0, Math.min(1, ((player.age || 26) - 21) / 16));
-  const exp = Math.max(0, Math.min(1, (player.exp || 0) / 15));
-  const val = Math.log10((player.value || 100) + 1) / 4;
-  const rank = Math.max(0, Math.min(1, 1 - Math.log10((player.rank || 999) + 1) / 4));
-  const healthy = player.inj ? 0 : 1;
-  return [qb, rb, wr, te, age, exp, val, rank, healthy];
+  var pos = player.pos || 'WR';
+  var PW = 5;
+  var qb = (pos==='QB'?1:0)*PW, rb = (pos==='RB'?1:0)*PW, wr = (pos==='WR'?1:0)*PW, te = (pos==='TE'?1:0)*PW;
+  var age = Math.max(0, Math.min(1, ((player.age||26)-21)/16));
+  var exp = Math.max(0, Math.min(1, (player.exp||0)/15));
+  var val = Math.log10((player.value||100)+1)/4.5;
+  var rank = Math.max(0, Math.min(1, 1 - Math.log10((player.rank||9999)+1)/4));
+  var healthy = player.inj ? 0 : 1;
+  var sfBoost = (isSuperflex && pos==='QB') ? 0.5 : 0;
+  return [qb, rb, wr, te, age, exp, val, rank, healthy, sfBoost];
 }
-
 
 function Galaxy({ data, derived }) {
-  const mountRef = useRef(null);
-  const [selected, setSelected] = useState(null);
-  const [hovered, setHovered] = useState(null);
-  const [query, setQuery] = useState('');
-  const [includeWaivers, setIncludeWaivers] = useState(true);
+  var mountRef = useRef(null);
+  var labelCanvasRef = useRef(null);
+  var sceneRef = useRef(null);
+  var [selected, setSelected] = useState(null);
+  var [hovered, setHovered] = useState(null);
+  var [query, setQuery] = useState('');
+  var [posFilter, setPosFilter] = useState('ALL');
+  var [showLabels, setShowLabels] = useState(false);
+  var [faCount, setFaCount] = useState(150);
 
-
-  // Build the player universe
-  const universe = useMemo(() => {
-    const players = [];
-    const seen = new Set();
-    derived.standings.forEach(s => {
-      const rv = derived.rosterValues[s.roster_id];
-      rv.players.forEach(p => {
+  var universe = useMemo(function() {
+    var players = [];
+    var seen = new Set();
+    derived.standings.forEach(function(s) {
+      var rv = derived.rosterValues[s.roster_id];
+      rv.players.forEach(function(p) {
         if (seen.has(p.id) || !p.pos || !['QB','RB','WR','TE'].includes(p.pos)) return;
         seen.add(p.id);
-        players.push({ ...p, owner: s.team, isFA: false });
+        players.push(Object.assign({}, p, { owner: s.team, ownerAvatar: s.avatar, isFA: false, rosterId: s.roster_id }));
       });
     });
-    if (includeWaivers) {
-      const rostered = new Set(players.map(p => p.id));
-      Object.entries(data.players)
-        .filter(([id, p]) => !rostered.has(id) && ['QB','RB','WR','TE'].includes(p.pos))
-        .map(([id, p]) => ({ id, ...p, value: calcPlayerValue(p, data.isSuperflex), owner: 'FREE AGENT', isFA: true }))
-        .filter(p => p.value >= 200)
-        .sort((a,b) => b.value - a.value)
-        .slice(0, 60)
-        .forEach(p => players.push(p));
-    }
-    return players;
-  }, [data, derived, includeWaivers]);
+    // All rostered + top FA players
+    var topFAs = Object.entries(data.players)
+      .filter(function(e){ var id=e[0],p=e[1]; return !seen.has(id) && ['QB','RB','WR','TE'].includes(p.pos); })
+      .map(function(e){ var id=e[0],p=e[1]; return Object.assign({id:id},p,{value:calcPlayerValue(p,data.isSuperflex),owner:'Free Agent',isFA:true}); })
+      .filter(function(p){ return p.value >= 50; })
+      .sort(function(a,b){ return b.value-a.value; })
+      .slice(0, faCount);
+    return players.concat(topFAs);
+  }, [data, derived, faCount]);
 
-
-  // PCA projection → 3D coordinates per player
-  const positions3d = useMemo(() => {
+  var positions3d = useMemo(function() {
     if (!universe.length) return [];
-    const features = universe.map(p => buildFeatures(p, data.isSuperflex));
-    const coords = pca3d(features);
-    // Normalize each axis to [-1, 1]
-    const mins = [Infinity, Infinity, Infinity];
-    const maxs = [-Infinity, -Infinity, -Infinity];
-    coords.forEach(c => c.forEach((v, i) => { if (v < mins[i]) mins[i] = v; if (v > maxs[i]) maxs[i] = v; }));
-    const ranges = maxs.map((m, i) => Math.max(1e-6, m - mins[i]));
-    const SCALE = 35;
-    return coords.map(c => c.map((v, i) => ((v - mins[i]) / ranges[i] - 0.5) * 2 * SCALE));
+    var features = universe.map(function(p){ return buildFeatures(p, data.isSuperflex); });
+    var coords = pca3d(features);
+    var mins = [Infinity,Infinity,Infinity], maxs = [-Infinity,-Infinity,-Infinity];
+    coords.forEach(function(c){ c.forEach(function(v,i){ if(v<mins[i])mins[i]=v; if(v>maxs[i])maxs[i]=v; }); });
+    var ranges = maxs.map(function(m,i){ return Math.max(1e-6, m-mins[i]); });
+    var SCALE = 42;
+    return coords.map(function(c){ return c.map(function(v,i){ return ((v-mins[i])/ranges[i]-0.5)*2*SCALE; }); });
   }, [universe, data.isSuperflex]);
 
-
-  // Three.js scene
-  useEffect(() => {
+  useEffect(function() {
     if (!mountRef.current || !window.THREE || !universe.length) return;
-    const mount = mountRef.current;
-    const w = mount.clientWidth;
-    const h = mount.clientHeight;
+    var mount = mountRef.current;
+    var w = mount.clientWidth, h = mount.clientHeight;
 
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x030508);
+    scene.fog = new THREE.FogExp2(0x030508, 0.006);
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x05070a);
-    scene.fog = new THREE.FogExp2(0x05070a, 0.008);
+    var camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 600);
+    var camState = { dist: 95, rotX: 0.25, rotY: 0.4, targetX: 0.25, targetY: 0.4, autoRot: 0 };
 
-
-    const camera = new THREE.PerspectiveCamera(55, w/h, 0.1, 500);
-    const camState = { dist: 90, rotX: 0.2, rotY: 0.5 };
-
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     mount.appendChild(renderer.domElement);
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.touchAction = 'none';
 
-
-    // Background starfield for depth
-    const starsGeo = new THREE.BufferGeometry();
-    const starPositions = [];
-    for (let i = 0; i < 800; i++) {
-      const r = 120 + Math.random() * 80;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      starPositions.push(r*Math.sin(phi)*Math.cos(theta), r*Math.sin(phi)*Math.sin(theta), r*Math.cos(phi));
+    // Background starfield
+    var starsGeo = new THREE.BufferGeometry();
+    var starPos = new Float32Array(3000);
+    for (var i = 0; i < 1000; i++) {
+      var r = 150 + Math.random()*100, th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+      starPos[i*3] = r*Math.sin(ph)*Math.cos(th);
+      starPos[i*3+1] = r*Math.sin(ph)*Math.sin(th);
+      starPos[i*3+2] = r*Math.cos(ph);
     }
-    starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-    const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.6, transparent: true, opacity: 0.5 });
-    scene.add(new THREE.Points(starsGeo, starsMat));
+    starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    var starSizes = new Float32Array(1000).fill(0).map(function(){ return 0.3 + Math.random()*0.8; });
+    starsGeo.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+    var starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.4, sizeAttenuation: true });
+    scene.add(new THREE.Points(starsGeo, starMat));
 
-
-    // Player stars: solid sphere + glow sphere
-    const playerMeshes = [];
-    const playerGroup = new THREE.Group();
-    const glowGroup = new THREE.Group();
-    universe.forEach((p, i) => {
-      const [x, y, z] = positions3d[i];
-      const radius = 0.45 + Math.log10((p.value || 1) + 1) * 0.32;
-      const color = POS_HEX[p.pos] || 0x888888;
-
-
-      const sphere = new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 14, 14),
-        new THREE.MeshBasicMaterial({ color })
-      );
-      sphere.position.set(x, y, z);
-      sphere.userData = { player: p, idx: i, radius };
-      playerGroup.add(sphere);
-      playerMeshes.push(sphere);
-
-
-      const glow = new THREE.Mesh(
-        new THREE.SphereGeometry(radius * 2.8, 12, 12),
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false })
-      );
-      glow.position.set(x, y, z);
-      glowGroup.add(glow);
+    // Nebula-like ambient glow clouds for position clusters
+    var POS_LIST = ['QB','RB','WR','TE'];
+    var clusterCenters = {};
+    POS_LIST.forEach(function(pos) {
+      var posPlayers = universe.map(function(p,i){ return {p:p,i:i}; }).filter(function(x){ return x.p.pos===pos; });
+      if (!posPlayers.length) return;
+      var cx=0,cy=0,cz=0;
+      posPlayers.forEach(function(x){ cx+=positions3d[x.i][0]; cy+=positions3d[x.i][1]; cz+=positions3d[x.i][2]; });
+      cx/=posPlayers.length; cy/=posPlayers.length; cz/=posPlayers.length;
+      clusterCenters[pos] = [cx,cy,cz];
+      // Soft glow sphere for cluster
+      var glowGeo = new THREE.SphereGeometry(12, 16, 16);
+      var col = POS_HEX[pos] || 0x888888;
+      var glowMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.04, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide });
+      var glowMesh = new THREE.Mesh(glowGeo, glowMat);
+      glowMesh.position.set(cx, cy, cz);
+      scene.add(glowMesh);
     });
+
+    // Player meshes with value-based sizing and glow halos
+    var playerMeshes = [];
+    var playerGroup = new THREE.Group();
+    var glowGroup = new THREE.Group();
+
+    universe.forEach(function(p, i) {
+      var xyz = positions3d[i];
+      if (!xyz) return;
+      var x = xyz[0], y = xyz[1], z = xyz[2];
+      var col = POS_HEX[p.pos] || 0x888888;
+      var logVal = Math.log10((p.value||100)+1);
+      var radius = 0.35 + logVal * 0.28;
+      if (p.isFA) radius *= 0.75;
+
+      var geo = new THREE.SphereGeometry(radius, 10, 10);
+      var mat = new THREE.MeshBasicMaterial({ color: col });
+      var mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.userData = { player: p, idx: i, radius: radius };
+      playerGroup.add(mesh);
+      playerMeshes.push(mesh);
+
+      // Glow halo — larger for high-value players
+      var glowRadius = radius * (p.isFA ? 2 : 3.5) * (1 + logVal*0.15);
+      var glowGeo = new THREE.SphereGeometry(glowRadius, 8, 8);
+      var opacity = p.isFA ? 0.08 : 0.18 + logVal*0.04;
+      var glowMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: Math.min(opacity, 0.35), blending: THREE.AdditiveBlending, depthWrite: false });
+      var glowMesh = new THREE.Mesh(glowGeo, glowMat);
+      glowMesh.position.set(x, y, z);
+      glowGroup.add(glowMesh);
+    });
+
     scene.add(glowGroup);
     scene.add(playerGroup);
+    sceneRef.current = { scene, camera, renderer, playerMeshes, playerGroup, glowGroup, camState, clusterCenters };
 
+    // Selection ring
+    var ringGeo = new THREE.RingGeometry(1, 1.2, 32);
+    var ringMat = new THREE.MeshBasicMaterial({ color: 0xd4a857, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+    var selRing = new THREE.Mesh(ringGeo, ringMat);
+    selRing.visible = false;
+    scene.add(selRing);
 
-    // Selection ring (added/positioned on click)
-    const ringGeo = new THREE.RingGeometry(1, 1.15, 32);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4a857, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
-    const selectionRing = new THREE.Mesh(ringGeo, ringMat);
-    selectionRing.visible = false;
-    scene.add(selectionRing);
+    // Hover ring (white)
+    var hoverRingGeo = new THREE.RingGeometry(1, 1.15, 28);
+    var hoverRingMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+    var hoverRing = new THREE.Mesh(hoverRingGeo, hoverRingMat);
+    hoverRing.visible = false;
+    scene.add(hoverRing);
 
-
-    // Raycaster for picking
-    const raycaster = new THREE.Raycaster();
-    raycaster.params.Points = { threshold: 0.5 };
-    const ndc = new THREE.Vector2();
-
+    // Raycaster
+    var raycaster = new THREE.Raycaster();
+    raycaster.params.Mesh = {};
+    var ndc = new THREE.Vector2();
 
     // Pointer state
-    const pState = { dragging: false, x: 0, y: 0, downX: 0, downY: 0, moved: false, pinchDist: 0 };
-    function pointerXY(e) {
+    var pState = { dragging: false, x: 0, y: 0, downX: 0, downY: 0, moved: false, pinchDist: 0 };
+    function getXY(e) {
       if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
       return { x: e.clientX, y: e.clientY };
     }
-    function pinchDistance(e) {
+    function getPinchDist(e) {
       if (!e.touches || e.touches.length < 2) return 0;
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      return Math.sqrt(dx*dx + dy*dy);
+      var dx = e.touches[0].clientX-e.touches[1].clientX, dy = e.touches[0].clientY-e.touches[1].clientY;
+      return Math.sqrt(dx*dx+dy*dy);
+    }
+    function doRaycast(x, y) {
+      var rect = renderer.domElement.getBoundingClientRect();
+      ndc.x = ((x-rect.left)/rect.width)*2-1;
+      ndc.y = -((y-rect.top)/rect.height)*2+1;
+      raycaster.setFromCamera(ndc, camera);
+      return raycaster.intersectObjects(playerMeshes);
     }
     function onDown(e) {
-      const { x, y } = pointerXY(e);
-      pState.dragging = true; pState.moved = false;
-      pState.x = x; pState.y = y; pState.downX = x; pState.downY = y;
-      if (e.touches && e.touches.length === 2) pState.pinchDist = pinchDistance(e);
+      var xy = getXY(e);
+      pState.dragging=true; pState.moved=false;
+      pState.x=xy.x; pState.y=xy.y; pState.downX=xy.x; pState.downY=xy.y;
+      if (e.touches && e.touches.length===2) pState.pinchDist = getPinchDist(e);
     }
     function onMove(e) {
-      // Hover detection (when not dragging)
       if (!pState.dragging) {
-        const { x, y } = pointerXY(e);
-        const rect = renderer.domElement.getBoundingClientRect();
-        ndc.x = ((x - rect.left) / rect.width) * 2 - 1;
-        ndc.y = -((y - rect.top) / rect.height) * 2 + 1;
-        raycaster.setFromCamera(ndc, camera);
-        const hits = raycaster.intersectObjects(playerMeshes);
+        var xy = getXY(e);
+        var hits = doRaycast(xy.x, xy.y);
         if (hits.length) {
           renderer.domElement.style.cursor = 'pointer';
-          setHovered({ player: hits[0].object.userData.player, x, y });
+          var obj = hits[0].object;
+          setHovered({ player: obj.userData.player, screenX: xy.x, screenY: xy.y });
+          hoverRing.position.copy(obj.position);
+          hoverRing.scale.setScalar(obj.userData.radius * 2.8);
+          hoverRing.visible = true;
         } else {
           renderer.domElement.style.cursor = 'grab';
           setHovered(null);
+          hoverRing.visible = false;
         }
         return;
       }
-      // Pinch zoom (2 fingers)
-      if (e.touches && e.touches.length === 2) {
-        const newDist = pinchDistance(e);
-        if (pState.pinchDist > 0) {
-          const delta = (pState.pinchDist - newDist) * 0.3;
-          camState.dist = Math.max(20, Math.min(200, camState.dist + delta));
-        }
-        pState.pinchDist = newDist;
+      if (e.touches && e.touches.length===2) {
+        var nd = getPinchDist(e);
+        if (pState.pinchDist>0) camState.dist = Math.max(20, Math.min(250, camState.dist+(pState.pinchDist-nd)*0.4));
+        pState.pinchDist = nd;
         return;
       }
-      // Drag rotate
-      const { x, y } = pointerXY(e);
-      const dx = x - pState.x;
-      const dy = y - pState.y;
-      if (Math.abs(x - pState.downX) + Math.abs(y - pState.downY) > 4) pState.moved = true;
-      camState.rotY += dx * 0.006;
-      camState.rotX += dy * 0.006;
-      camState.rotX = Math.max(-Math.PI/2 + 0.05, Math.min(Math.PI/2 - 0.05, camState.rotX));
-      pState.x = x; pState.y = y;
+      var xy = getXY(e);
+      var dx = xy.x-pState.x, dy = xy.y-pState.y;
+      if (Math.abs(xy.x-pState.downX)+Math.abs(xy.y-pState.downY)>5) pState.moved=true;
+      camState.targetY += dx*0.005;
+      camState.targetX += dy*0.005;
+      camState.targetX = Math.max(-Math.PI/2+0.05, Math.min(Math.PI/2-0.05, camState.targetX));
+      pState.x=xy.x; pState.y=xy.y;
     }
     function onUp(e) {
       if (pState.dragging && !pState.moved) {
-        // Click — pick
-        const { x, y } = pointerXY(e.changedTouches ? { touches: e.changedTouches } : e);
-        const rect = renderer.domElement.getBoundingClientRect();
-        ndc.x = ((x - rect.left) / rect.width) * 2 - 1;
-        ndc.y = -((y - rect.top) / rect.height) * 2 + 1;
-        raycaster.setFromCamera(ndc, camera);
-        const hits = raycaster.intersectObjects(playerMeshes);
+        var src = e.changedTouches ? e.changedTouches[0] : e;
+        var hits = doRaycast(src.clientX, src.clientY);
         if (hits.length) {
-          const obj = hits[0].object;
-          setSelected(obj.userData.player);
-          selectionRing.position.copy(obj.position);
-          selectionRing.scale.setScalar(obj.userData.radius * 2.5);
-          selectionRing.visible = true;
+          var obj = hits[0].object;
+          var pl = obj.userData.player;
+          setSelected(pl);
+          selRing.position.copy(obj.position);
+          selRing.scale.setScalar(obj.userData.radius * 3.2);
+          selRing.visible = true;
         } else {
           setSelected(null);
-          selectionRing.visible = false;
+          selRing.visible = false;
         }
       }
-      pState.dragging = false;
-      pState.pinchDist = 0;
+      pState.dragging=false; pState.pinchDist=0;
     }
     function onWheel(e) {
       e.preventDefault();
-      camState.dist = Math.max(20, Math.min(200, camState.dist + e.deltaY * 0.06));
+      camState.dist = Math.max(20, Math.min(250, camState.dist + e.deltaY*0.07));
     }
-
-
-    const dom = renderer.domElement;
+    var dom = renderer.domElement;
     dom.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
-    dom.addEventListener('wheel', onWheel, { passive: false });
-    dom.addEventListener('touchstart', onDown, { passive: true });
-    dom.addEventListener('touchmove', onMove, { passive: true });
+    dom.addEventListener('wheel', onWheel, {passive:false});
+    dom.addEventListener('touchstart', onDown, {passive:true});
+    dom.addEventListener('touchmove', onMove, {passive:true});
     dom.addEventListener('touchend', onUp);
 
-
-    // Resize
-    const onResize = () => {
-      const nw = mount.clientWidth, nh = mount.clientHeight;
-      camera.aspect = nw/nh;
-      camera.updateProjectionMatrix();
-      renderer.setSize(nw, nh);
-    };
+    function onResize() {
+      var nw=mount.clientWidth, nh=mount.clientHeight;
+      camera.aspect=nw/nh; camera.updateProjectionMatrix();
+      renderer.setSize(nw,nh);
+    }
     window.addEventListener('resize', onResize);
 
-
-    // Animation
-    let frameId;
-    let autoRot = 0;
-    const animate = () => {
+    var frameId, lastTime=0;
+    function animate(t) {
       frameId = requestAnimationFrame(animate);
-      // Subtle auto-rotation only when idle
-      if (!pState.dragging && !hovered) autoRot += 0.0008;
-      const yaw = camState.rotY + autoRot;
+      var dt = Math.min((t - lastTime)/1000, 0.05); lastTime = t;
+      // Smooth camera interpolation
+      var lerpSpeed = 8 * dt;
+      camState.rotX += (camState.targetX - camState.rotX) * lerpSpeed;
+      camState.rotY += (camState.targetY - camState.rotY) * lerpSpeed;
+      if (!pState.dragging) { camState.targetY += 0.0005; }
+      var yaw = camState.rotY;
       camera.position.x = camState.dist * Math.cos(camState.rotX) * Math.sin(yaw);
       camera.position.y = camState.dist * Math.sin(camState.rotX);
       camera.position.z = camState.dist * Math.cos(camState.rotX) * Math.cos(yaw);
-      camera.lookAt(0, 0, 0);
-      // Selection ring always faces camera
-      if (selectionRing.visible) selectionRing.lookAt(camera.position);
+      camera.lookAt(0,0,0);
+      if (selRing.visible) selRing.lookAt(camera.position);
+      if (hoverRing.visible) hoverRing.lookAt(camera.position);
       renderer.render(scene, camera);
-    };
-    animate();
+    }
+    requestAnimationFrame(animate);
 
-
-    return () => {
+    return function() {
       cancelAnimationFrame(frameId);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('resize', onResize);
-      playerMeshes.forEach(m => { m.geometry.dispose(); m.material.dispose(); });
-      glowGroup.children.forEach(m => { m.geometry.dispose(); m.material.dispose(); });
-      starsGeo.dispose(); starsMat.dispose();
+      playerMeshes.forEach(function(m){ m.geometry.dispose(); m.material.dispose(); });
+      glowGroup.children.forEach(function(m){ m.geometry.dispose(); m.material.dispose(); });
+      starsGeo.dispose(); starMat.dispose();
       ringGeo.dispose(); ringMat.dispose();
+      hoverRingGeo.dispose(); hoverRingMat.dispose();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
   }, [universe, positions3d]);
 
-
-  // Similarity neighbors for selected player (top 5 by feature-space distance)
-  const neighbors = useMemo(() => {
-    if (!selected) return [];
-    const features = universe.map(p => buildFeatures(p, data.isSuperflex));
-    const selIdx = universe.findIndex(p => p.id === selected.id);
+  // Similarity neighbors
+  var neighbors = useMemo(function() {
+    if (!selected || !universe.length) return [];
+    var features = universe.map(function(p){ return buildFeatures(p, data.isSuperflex); });
+    var selIdx = universe.findIndex(function(p){ return p.id === selected.id; });
     if (selIdx < 0) return [];
-    const selF = features[selIdx];
-    const dists = features.map((f, i) => {
-      const d = f.reduce((s, x, j) => s + (x - selF[j])**2, 0);
-      return { idx: i, dist: Math.sqrt(d) };
-    });
-    return dists.filter(d => d.idx !== selIdx).sort((a,b) => a.dist - b.dist).slice(0, 5).map(d => universe[d.idx]);
+    var selF = features[selIdx];
+    return features
+      .map(function(f,i){ return { idx:i, dist: Math.sqrt(f.reduce(function(s,x,j){ return s+(x-selF[j])**2; },0)) }; })
+      .filter(function(d){ return d.idx !== selIdx; })
+      .sort(function(a,b){ return a.dist-b.dist; })
+      .slice(0, 8)
+      .map(function(d){ return universe[d.idx]; });
   }, [selected, universe, data.isSuperflex]);
 
+  var searchResults = query.length >= 2
+    ? universe.filter(function(p){ return p.n && p.n.toLowerCase().includes(query.toLowerCase()); }).slice(0, 8)
+    : [];
 
-  const filtered = query ? universe.filter(p => p.n?.toLowerCase().includes(query.toLowerCase())).slice(0, 6) : [];
-
+  var filtered = posFilter === 'ALL' ? universe : universe.filter(function(p){ return p.pos === posFilter; });
+  var posCounts = {};
+  ['QB','RB','WR','TE'].forEach(function(pos){ posCounts[pos] = universe.filter(function(p){ return p.pos===pos; }).length; });
 
   return (
     <div>
-      <SectionTitle sub="3D similarity map — each star is a player, nearby stars share profile traits (position, age, value, experience). Drag to rotate, scroll to zoom.">Player Galaxy</SectionTitle>
+      <SectionTitle sub={"3D dynasty similarity galaxy — " + universe.length + " players plotted. Position clusters emerge from PCA on age, value, rank & experience. Drag to orbit, scroll to zoom, click any star."}>
+        Player Galaxy
+      </SectionTitle>
 
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search & locate a player..."
-            style={{ width: '100%', padding: 10, background: '#131820', border: '1px solid #2a3441', color: '#e8ecf0', borderRadius: 4, fontSize: 13, fontFamily: 'inherit' }} />
-          {filtered.length > 0 && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#131820', border: '1px solid #2a3441', borderRadius: 4, zIndex: 20, maxHeight: 240, overflowY: 'auto' }}>
-              {filtered.map(p => (
-                <div key={p.id} onClick={() => { setSelected(p); setQuery(''); }}
-                  style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #2a3441' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <PosBadge pos={p.pos} />
-                    <span style={{ fontSize: 13 }}>{p.n}</span>
+      {/* Controls bar */}
+      <div style={{display:'flex', gap:8, marginBottom:12, flexWrap:'wrap', alignItems:'center'}}>
+        <div style={{position:'relative', flex:1, minWidth:200}}>
+          <input
+            value={query}
+            onChange={function(e){ setQuery(e.target.value); }}
+            placeholder="Search & highlight player..."
+            style={{width:'100%', padding:'10px 12px', background:'#131820', border:'1px solid #2a3441', color:'#e8ecf0', borderRadius:4, fontSize:13, fontFamily:'inherit'}}
+          />
+          {searchResults.length > 0 && (
+            <div style={{position:'absolute', top:'100%', left:0, right:0, marginTop:4, background:'#131820', border:'1px solid #2a3441', borderRadius:4, zIndex:20, maxHeight:240, overflowY:'auto'}}>
+              {searchResults.map(function(p) {
+                return (
+                  <div key={p.id} onClick={function(){ setSelected(p); setQuery(''); }}
+                    style={{padding:'8px 12px', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', borderBottom:'1px solid #1c2530'}}>
+                    <div style={{display:'flex', alignItems:'center', gap:8}}>
+                      <PosBadge pos={p.pos} />
+                      <span style={{fontSize:13}}>{p.n}</span>
+                    </div>
+                    <span className="mono" style={{fontSize:10, color: p.isFA ? '#8b95a3' : '#d4a857'}}>{p.isFA ? 'FA' : p.owner}</span>
                   </div>
-                  <span className="mono" style={{ fontSize: 10, color: '#8b95a3' }}>{p.owner}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8b95a3', cursor: 'pointer' }}>
-          <input type="checkbox" checked={includeWaivers} onChange={e => setIncludeWaivers(e.target.checked)} />
-          Include top free agents
-        </label>
-        <span className="mono" style={{ fontSize: 11, color: '#8b95a3' }}>{universe.length} STARS</span>
+
+        {/* Position filters */}
+        <div style={{display:'flex', gap:4}}>
+          {['ALL','QB','RB','WR','TE'].map(function(pos) {
+            var active = posFilter === pos;
+            var col = POS_COLOR_CSS[pos] || '#d4a857';
+            return (
+              <button key={pos} onClick={function(){ setPosFilter(pos); }}
+                style={{padding:'8px 12px', background: active ? col : '#131820', border:'1px solid', borderColor: active ? col : '#2a3441',
+                  color: active ? '#fff' : '#8b95a3', borderRadius:4, fontSize:11, fontWeight:700, fontFamily:'inherit'}}>
+                {pos}{pos !== 'ALL' ? ' '+posCounts[pos] : ''}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* FA count slider */}
+        <div style={{display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#8b95a3'}}>
+          <span className="mono" style={{fontSize:10, whiteSpace:'nowrap'}}>FA: {faCount}</span>
+          <input type="range" min="50" max="500" step="50" value={faCount}
+            onChange={function(e){ setFaCount(parseInt(e.target.value)); }}
+            style={{width:80, accentColor:'#d4a857'}} />
+        </div>
+
+        <div style={{display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#8b95a3'}}>
+          <label style={{display:'flex', alignItems:'center', gap:4, cursor:'pointer'}}>
+            <input type="checkbox" checked={showLabels} onChange={function(e){ setShowLabels(e.target.checked); }} />
+            <span style={{fontSize:11}}>Labels</span>
+          </label>
+        </div>
+
+        <span className="mono" style={{fontSize:10, color:'#475569', whiteSpace:'nowrap'}}>{universe.length} STARS</span>
       </div>
 
+      {/* Legend */}
+      <div style={{display:'flex', gap:16, marginBottom:10, flexWrap:'wrap'}}>
+        {Object.entries(POS_COLOR_CSS).filter(function(e){ return ['QB','RB','WR','TE'].includes(e[0]); }).map(function(e) {
+          var pos = e[0], col = e[1];
+          return (
+            <div key={pos} style={{display:'flex', alignItems:'center', gap:6, fontSize:11}}>
+              <div style={{width:10, height:10, borderRadius:'50%', background:col, boxShadow:'0 0 8px '+col}} />
+              <span className="mono" style={{color:'#8b95a3', letterSpacing:0.5}}>{pos}</span>
+            </div>
+          );
+        })}
+        <div style={{display:'flex', alignItems:'center', gap:6, fontSize:11}}>
+          <div style={{width:10, height:10, borderRadius:'50%', background:'#ffffff', opacity:0.3}} />
+          <span className="mono" style={{color:'#475569', fontSize:10}}>FA (dimmer)</span>
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:6, fontSize:11}}>
+          <div style={{width:6, height:6, borderRadius:'50%', background:'#d4a857'}} />
+          <div style={{width:10, height:10, borderRadius:'50%', background:'#d4a857'}} />
+          <span className="mono" style={{color:'#475569', fontSize:10}}>size = dynasty value</span>
+        </div>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 300px' : '1fr', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{display:'grid', gridTemplateColumns: selected ? '1fr 320px' : '1fr', gap:12, alignItems:'flex-start'}}>
+        {/* 3D canvas */}
         <div ref={mountRef} style={{
-          height: 560, background: '#05070a',
-          border: '1px solid #2a3441', borderRadius: 4, overflow: 'hidden',
-          position: 'relative', cursor: 'grab'
+          height:600, background:'#030508', border:'1px solid #2a3441', borderRadius:6,
+          overflow:'hidden', position:'relative', cursor:'grab', userSelect:'none'
         }}>
-          <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 12, pointerEvents: 'none', flexWrap: 'wrap' }}>
-            {Object.entries(POS_HEX).map(([pos, hex]) => (
-              <div key={pos} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: `#${hex.toString(16).padStart(6,'0')}`, boxShadow: `0 0 8px #${hex.toString(16).padStart(6,'0')}` }} />
-                <span className="mono" style={{ color: '#8b95a3', letterSpacing: 0.5 }}>{pos}</span>
-              </div>
-            ))}
-          </div>
+          {/* Hover tooltip */}
           {hovered && (
-            <div style={{
-              position: 'absolute', left: 12, bottom: 12, pointerEvents: 'none',
-              background: 'rgba(10,13,18,0.92)', border: '1px solid #2a3441',
-              padding: '8px 12px', borderRadius: 4, fontSize: 12, maxWidth: 280
-            }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2 }}>
+            <div style={{position:'absolute', left:12, bottom:12, pointerEvents:'none',
+              background:'rgba(3,5,8,0.95)', border:'1px solid #2a3441', padding:'8px 12px', borderRadius:4, fontSize:12, maxWidth:260}}>
+              <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:4}}>
                 <PosBadge pos={hovered.player.pos} />
-                <span style={{ fontWeight: 600 }}>{hovered.player.n}</span>
+                <span style={{fontWeight:700, fontSize:13}}>{hovered.player.n}</span>
+                {hovered.player.inj && <span className="mono" style={{fontSize:9, color:'#f87171'}}>{hovered.player.inj}</span>}
               </div>
-              <div className="mono" style={{ fontSize: 10, color: '#8b95a3' }}>
-                {hovered.player.team} · AGE {hovered.player.age || '?'} · VAL {hovered.player.value?.toLocaleString() || '—'}
+              <div className="mono" style={{fontSize:10, color:'#8b95a3', lineHeight:1.6}}>
+                {hovered.player.team || 'FA'} · AGE {hovered.player.age || '?'} · EXP {hovered.player.exp||0}yr<br/>
+                <span style={{color:'#d4a857'}}>{hovered.player.value?.toLocaleString() || '—'} val</span>
+                {' · '}<span style={{color: hovered.player.isFA ? '#475569' : '#e8ecf0'}}>{hovered.player.owner}</span>
               </div>
             </div>
           )}
+
+          {/* Axis hint */}
+          <div style={{position:'absolute', top:12, right:12, pointerEvents:'none'}}>
+            <div className="mono" style={{fontSize:9, color:'#2a3441', letterSpacing:0.5, textAlign:'right', lineHeight:1.8}}>
+              DRAG · ORBIT<br/>SCROLL · ZOOM<br/>CLICK · SELECT
+            </div>
+          </div>
         </div>
 
-
+        {/* Selected player panel */}
         {selected && (
-          <div className="card" style={{ padding: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-              <PosBadge pos={selected.pos} />
-              <button onClick={() => setSelected(null)} style={{ background: 'transparent', border: 'none', color: '#8b95a3', padding: 0 }}><X size={16} /></button>
-            </div>
-            <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>{selected.n}</div>
-            <div className="mono" style={{ fontSize: 10, color: '#8b95a3', marginBottom: 14, letterSpacing: 0.5 }}>
-              {selected.team || 'FA'} · AGE {selected.age || '?'} · EXP {selected.exp || 0}YR
-            </div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-              <div style={{ flex: 1 }}>
-                <div className="mono" style={{ fontSize: 9, color: '#8b95a3', letterSpacing: 1, marginBottom: 2 }}>VALUE</div>
-                <div className="mono" style={{ fontSize: 16, color: '#d4a857' }}>{selected.value?.toLocaleString() || '—'}</div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="mono" style={{ fontSize: 9, color: '#8b95a3', letterSpacing: 1, marginBottom: 2 }}>OWNER</div>
-                <div style={{ fontSize: 12, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selected.owner}</div>
-              </div>
-            </div>
-            {selected.inj && <div className="mono" style={{ fontSize: 10, color: '#f87171', marginBottom: 10 }}>STATUS: {selected.inj.toUpperCase()}</div>}
-
-
-            <div className="mono" style={{ fontSize: 9, color: '#8b95a3', letterSpacing: 1, marginBottom: 6 }}>NEAREST NEIGHBORS</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {neighbors.map(n => (
-                <div key={n.id} onClick={() => setSelected(n)}
-                  style={{ padding: '6px 8px', background: '#0a0d12', borderRadius: 3, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: `#${(POS_HEX[n.pos] || 0x666666).toString(16).padStart(6,'0')}`, flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.n}</div>
-                    <div className="mono" style={{ fontSize: 9, color: '#8b95a3' }}>{n.owner}</div>
-                  </div>
-                  <span className="mono" style={{ fontSize: 10, color: '#d4a857' }}>{n.value?.toLocaleString()}</span>
+          <div>
+            <div className="card" style={{padding:16, marginBottom:12}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12}}>
+                <div style={{display:'flex', gap:10, alignItems:'center'}}>
+                  <PosBadge pos={selected.pos} />
+                  {selected.inj && <span className="mono" style={{fontSize:9, color:'#f87171', background:'rgba(248,113,113,0.1)', padding:'2px 5px', borderRadius:2}}>{selected.inj}</span>}
                 </div>
-              ))}
+                <button onClick={function(){ setSelected(null); }} style={{background:'transparent', border:'none', color:'#8b95a3', padding:0, cursor:'pointer'}}><X size={16}/></button>
+              </div>
+              <div style={{fontSize:18, fontWeight:700, marginBottom:4}}>{selected.n}</div>
+              <div className="mono" style={{fontSize:10, color:'#8b95a3', marginBottom:14, letterSpacing:0.5}}>
+                {selected.team||'FA'} · AGE {selected.age||'?'} · {selected.exp||0}YR EXP
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14}}>
+                <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>DYN VALUE</div>
+                  <div className="mono" style={{fontSize:18, color:'#d4a857', fontWeight:700}}>{selected.value?.toLocaleString()||'—'}</div></div>
+                <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>OWNER</div>
+                  <div style={{fontSize:12, fontWeight:600, marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color: selected.isFA ? '#475569' : '#e8ecf0'}}>{selected.owner}</div></div>
+                <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>RANK</div>
+                  <div className="mono" style={{fontSize:13, color:'#e8ecf0'}}>{selected.rank < 9999 ? '#'+selected.rank : '—'}</div></div>
+                <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>AGE MULT</div>
+                  <div className="mono" style={{fontSize:13, color:'#e8ecf0'}}>{(ageMultiplier(selected.pos, selected.age)*100).toFixed(0)}%</div></div>
+              </div>
+            </div>
+
+            <div className="card" style={{padding:16}}>
+              <div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1, marginBottom:10}}>8 CLOSEST COMPS</div>
+              <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                {neighbors.map(function(n, ni) {
+                  var col = POS_COLOR_CSS[n.pos] || '#888888';
+                  return (
+                    <div key={n.id} onClick={function(){ setSelected(n); }}
+                      style={{padding:'8px 10px', background:'#0a0d12', borderRadius:4, cursor:'pointer', display:'flex', alignItems:'center', gap:10,
+                        borderLeft:'2px solid '+col, transition:'background 0.15s'}}
+                      onMouseEnter={function(e){ e.currentTarget.style.background='#1c2530'; }}
+                      onMouseLeave={function(e){ e.currentTarget.style.background='#0a0d12'; }}>
+                      <span className="mono" style={{fontSize:10, color:'#475569', minWidth:16}}>{ni+1}</span>
+                      <div style={{width:6, height:6, borderRadius:'50%', background:col, flexShrink:0, boxShadow:'0 0 4px '+col}} />
+                      <div style={{flex:1, minWidth:0}}>
+                        <div style={{fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{n.n}</div>
+                        <div className="mono" style={{fontSize:9, color:'#8b95a3'}}>{n.pos} · {n.owner}</div>
+                      </div>
+                      <span className="mono" style={{fontSize:11, color:'#d4a857'}}>{n.value?.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-
-      <div className="card" style={{ padding: 14, marginTop: 16 }}>
-        <div className="mono" style={{ fontSize: 10, color: '#8b95a3', letterSpacing: 1, marginBottom: 8 }}>HOW IT WORKS</div>
-        <div style={{ fontSize: 13, color: '#e8ecf0', lineHeight: 1.6 }}>
-          Each player gets a feature vector: position (one-hot), age, years experience, dynasty value, search rank, and health status.
-          PCA reduces that 9-dimensional space to 3D — the axes you see are the directions of maximum variance.
-          Position weighting dominates the projection so each cluster (QB / RB / WR / TE) forms naturally, with age &amp; value spreading players within each cluster.
-          Click any star to highlight it; the side panel shows its 5 closest neighbors in feature space — these are your &ldquo;tradeable equivalents.&rdquo;
+      {/* How it works */}
+      <div className="card" style={{padding:16, marginTop:12}}>
+        <div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1, marginBottom:8}}>HOW THE GALAXY WORKS</div>
+        <div style={{fontSize:12, color:'#e8ecf0', lineHeight:1.7}}>
+          Every player gets a 10-dimensional feature vector: position (one-hot ×5 weight), age, years of experience, dynasty value (log-scaled), search rank, and health.
+          Principal Component Analysis (PCA) compresses that into 3 axes of maximum variance — the three dimensions you navigate.
+          Position weighting dominates axis 1, so QB/RB/WR/TE clusters form naturally at the corners. Within each cluster, age and value spread players out, so young elites float away from aging veterans.
+          The <strong style={{color:'#d4a857'}}>8 closest comps</strong> for any selected player are the nearest neighbors in the original 10D space — useful for finding trade equivalents.
+          Use the FA slider to add more free agents to the galaxy, and the position filter to focus a cluster.
         </div>
       </div>
     </div>
   );
 }
-
-
 // ============ LOADING + ERROR ============
 function LoadingScreen() {
   return (
