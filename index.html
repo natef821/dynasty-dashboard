@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dynasty Dashboard</title>
-  <meta name="description" content="Live dynasty fantasy football dashboard — power rankings, team grades, trade analyzer, playoff odds, waiver wire, draft capital." />
+  <meta name="description" content="Live dynasty fantasy football dashboard â power rankings, team grades, trade analyzer, playoff odds, waiver wire, draft capital." />
   <meta name="theme-color" content="#0a0d12" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%88%3C/text%3E%3C/svg%3E" />
 
@@ -29,7 +29,7 @@
   <div id="boot">
     <div class="ring"></div>
     <div class="label">LOADING</div>
-    <div class="sub">Initializing dashboard…</div>
+    <div class="sub">Initializing dashboardâ¦</div>
   </div>
   <div id="root"></div>
 
@@ -66,8 +66,19 @@
     const X = (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>;
     const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
     const Sparkle = (p) => <Icon {...p}><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"/></Icon>;
-    // Unused-but-imported icons referenced in original — kept as no-ops for safety
+    // Unused-but-imported icons referenced in original â kept as no-ops for safety
     const TrendingDown = TrendingUp, Minus = X, BarChart3 = Activity, Shield = AlertCircle, Zap = Activity;
+
+const Clock = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Icon>;
+const HistoryIcon = (p) => <Icon {...p}><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 15 15"/></Icon>;
+const BarChart2 = (p) => <Icon {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></Icon>;
+const Swords = (p) => <Icon {...p}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/></Icon>;
+const Baby = (p) => <Icon {...p}><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><circle cx="12" cy="10" r="7"/></Icon>;
+const Newspaper = (p) => <Icon {...p}><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></Icon>;
+const Medal = (p) => <Icon {...p}><circle cx="12" cy="17" r="5"/><path d="M12 18v-2"/><path d="M8 7h8"/><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/></Icon>;
+const FlushIcon = (p) => <Icon {...p}><path d="M4 2h16v4H4z"/><path d="M4 6c0 7 4 10 8 10s8-3 8-10"/><path d="M9 20h6v2H9z"/></Icon>;
+const Settings2 = (p) => <Icon {...p}><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></Icon>;
+
 
 
 
@@ -111,7 +122,7 @@ function ageMultiplier(pos, age) {
 
 function rankToValue(rank) {
   if (!rank || rank > 1500) return 0;
-  // Exponential decay from search_rank — top players ~8000, fades fast
+  // Exponential decay from search_rank â top players ~8000, fades fast
   return Math.round(8500 * Math.exp(-rank / 75));
 }
 
@@ -128,7 +139,7 @@ function calcPlayerValue(player, isSuperflex) {
   value *= POSITION_BASE[pos] || 0.5;
 
 
-  // Superflex QB boost — QBs become elite
+  // Superflex QB boost â QBs become elite
   if (isSuperflex && pos === 'QB') value *= 1.55;
 
 
@@ -355,7 +366,7 @@ function simulatePlayoffs(standings, currentWeek, regSeasonWeeks, playoffSpots, 
     sim.slice(0, playoffSpots).forEach(t => playoffCounts[t.roster_id]++);
 
 
-    // Quick champion sim — top seeds favored, with upside variance
+    // Quick champion sim â top seeds favored, with upside variance
     const bracket = sim.slice(0, playoffSpots);
     let alive = [...bracket];
     while (alive.length > 1) {
@@ -606,6 +617,14 @@ function App() {
         {tab === 'matchups' && <Matchups data={data} derived={derived} />}
         {tab === 'picks' && <DraftCapital data={data} derived={derived} />}
         {tab === 'galaxy' && <Galaxy data={data} derived={derived} />}
+
+        {tab === 'history' && <LeagueHistory data={data} derived={derived} />}
+        {tab === 'analytics' && <SeasonAnalytics data={data} derived={derived} />}
+        {tab === 'h2h' && <HeadToHead data={data} derived={derived} />}
+        {tab === 'contention' && <ContentionWindow data={data} derived={derived} />}
+        {tab === 'news' && <NewsAndMoves data={data} derived={derived} />}
+        {tab === 'toilet' && <ToiletBowl data={data} derived={derived} />}
+        {tab === 'commish' && <Commissioner data={data} derived={derived} />}
       </div>
 
 
@@ -622,13 +641,13 @@ function Header({ data, onRefresh }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} className="live-dot" />
-            <span className="mono" style={{ fontSize: 10, color: '#8b95a3', letterSpacing: 1, textTransform: 'uppercase' }}>Live · {data.currentSeason} Season · Week {data.currentWeek}</span>
+            <span className="mono" style={{ fontSize: 10, color: '#8b95a3', letterSpacing: 1, textTransform: 'uppercase' }}>Live Â· {data.currentSeason} Season Â· Week {data.currentWeek}</span>
           </div>
           <h1 className="display" style={{ fontSize: 38, margin: 0, color: '#e8ecf0', lineHeight: 1 }}>
             {data.league.name}
           </h1>
           <div className="mono" style={{ fontSize: 11, color: '#d4a857', marginTop: 6, letterSpacing: 0.5 }}>
-            {data.isSuperflex ? 'SUPERFLEX' : '1QB'} · {data.users.length} TEAMS · DYNASTY
+            {data.isSuperflex ? 'SUPERFLEX' : '1QB'} Â· {data.users.length} TEAMS Â· DYNASTY
           </div>
         </div>
         <button onClick={onRefresh} style={{
@@ -654,6 +673,14 @@ function Nav({ tab, setTab }) {
     { id: 'matchups', label: 'Matchups', icon: Calendar },
     { id: 'picks', label: 'Draft Capital', icon: Coins },
     { id: 'galaxy', label: 'Galaxy', icon: Sparkle }
+
+    { id: 'history', label: 'History', icon: HistoryIcon },
+    { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+    { id: 'h2h', label: 'Head-to-Head', icon: Swords },
+    { id: 'contention', label: 'Contention', icon: Baby },
+    { id: 'news', label: 'News & Moves', icon: Newspaper },
+    { id: 'toilet', label: 'Toilet Bowl', icon: FlushIcon },
+    { id: 'commish', label: 'Commissioner', icon: Settings2 },
   ];
   return (
     <div style={{ background: '#0a0d12', borderBottom: '1px solid #2a3441', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -699,7 +726,7 @@ function Overview({ data, derived }) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Top Team" value={topPlayer.team} sub={`${topPlayer.wins}-${topPlayer.losses} · ${topPlayer.pf.toFixed(1)} PF`} accent="#10b981" />
+        <StatCard label="Top Team" value={topPlayer.team} sub={`${topPlayer.wins}-${topPlayer.losses} Â· ${topPlayer.pf.toFixed(1)} PF`} accent="#10b981" />
         <StatCard label="Highest PF" value={sorted.slice().sort((a,b)=>b.pf-a.pf)[0].team} sub={`${sorted.slice().sort((a,b)=>b.pf-a.pf)[0].pf.toFixed(1)} pts`} accent="#d4a857" />
         <StatCard label="Most Talent" value={powerRankings[0].team} sub={`${powerRankings[0].totalValue.toLocaleString()} value`} accent="#f59e0b" />
         <StatCard label="Title Favorite" value={
@@ -789,7 +816,7 @@ function PowerRankings({ data, derived }) {
 
   return (
     <div>
-      <SectionTitle sub="Composite rating: 35% record · 35% points scored · 30% roster talent">Power Rankings</SectionTitle>
+      <SectionTitle sub="Composite rating: 35% record Â· 35% points scored Â· 30% roster talent">Power Rankings</SectionTitle>
 
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -863,7 +890,7 @@ function Teams({ data, derived }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
         {standings.map(t => {
           const rv = rosterValues[t.roster_id];
-          const ageStr = avgAge(rv.players) || '—';
+          const ageStr = avgAge(rv.players) || 'â';
           const dc = draftCapital[t.roster_id]?.total || 0;
           return (
             <div key={t.roster_id} className="card card-hover" onClick={() => setSelected(t.roster_id)}
@@ -917,7 +944,7 @@ function TeamDetail({ roster, data, derived, onBack }) {
   return (
     <div>
       <button onClick={onBack} style={{ background: 'transparent', border: 'none', color: '#d4a857', fontSize: 12, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 4 }}>
-        ← All Teams
+        â All Teams
       </button>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <Avatar id={roster.avatar} size={64} />
@@ -931,7 +958,7 @@ function TeamDetail({ roster, data, derived, onBack }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 24 }}>
         <StatCard label="Record" value={`${roster.wins}-${roster.losses}${roster.ties?`-${roster.ties}`:''}`} sub={`${roster.pf.toFixed(1)} PF`} accent="#4ade80" />
         <StatCard label="Roster Value" value={rv.total.toLocaleString()} sub="dynasty score" accent="#d4a857" />
-        <StatCard label="Avg Age" value={avgAge(rv.players) || '—'} sub="skill positions" accent="#f59e0b" />
+        <StatCard label="Avg Age" value={avgAge(rv.players) || 'â'} sub="skill positions" accent="#f59e0b" />
         <StatCard label="Playoff Odds" value={`${playoffOdd.playoff.toFixed(0)}%`} sub={`${playoffOdd.champ.toFixed(1)}% champ`} accent="#dc2626" />
       </div>
 
@@ -947,13 +974,13 @@ function TeamDetail({ roster, data, derived, onBack }) {
                 <div className="display" style={{ fontSize: 36, color: GRADE_COLORS[g.grade], lineHeight: 1 }}>{g.grade}</div>
               </div>
               <div className="mono" style={{ fontSize: 10, color: '#8b95a3', marginBottom: 8 }}>
-                {g.count} ROSTERED · SCORE {g.score.toLocaleString()}
+                {g.count} ROSTERED Â· SCORE {g.score.toLocaleString()}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {g.players.slice(0, 3).map(p => (
                   <div key={p.id} style={{ fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.n}</span>
-                    <span className="mono" style={{ color: '#8b95a3' }}>{p.age || '—'}</span>
+                    <span className="mono" style={{ color: '#8b95a3' }}>{p.age || 'â'}</span>
                   </div>
                 ))}
               </div>
@@ -979,7 +1006,7 @@ function TeamDetail({ roster, data, derived, onBack }) {
                   {p.inj && <div className="mono" style={{ fontSize: 9, color: '#f87171', marginTop: 2 }}>{p.inj.toUpperCase()}</div>}
                 </td>
                 <td style={cell}><PosBadge pos={p.pos} /></td>
-                <td style={{...cell, textAlign:'right'}} className="mono">{p.age || '—'}</td>
+                <td style={{...cell, textAlign:'right'}} className="mono">{p.age || 'â'}</td>
                 <td style={{...cell, textAlign:'right'}} className="mono" >{p.team || 'FA'}</td>
                 <td className="mono" style={{...cell, textAlign:'right', color:'#d4a857'}}>{p.value.toLocaleString()}</td>
               </tr>
@@ -1180,7 +1207,7 @@ function AssetPicker({ side, players, picks, rosterName, excludedIds, onSelect, 
                 <PosBadge pos={p.pos} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.n}</div>
-                  <div className="mono" style={{ fontSize: 10, color: '#8b95a3' }}>{p.team} · AGE {p.age || '?'}</div>
+                  <div className="mono" style={{ fontSize: 10, color: '#8b95a3' }}>{p.team} Â· AGE {p.age || '?'}</div>
                 </div>
               </div>
               <div className="mono" style={{ color: '#d4a857', fontSize: 13 }}>{p.value.toLocaleString()}</div>
@@ -1223,7 +1250,7 @@ function Playoffs({ data, derived }) {
 
   return (
     <div>
-      <SectionTitle sub={`Monte Carlo simulation (3,000 iterations) · ${data.playoffSpots} teams make playoffs · Week ${data.currentWeek}`}>Playoff Odds</SectionTitle>
+      <SectionTitle sub={`Monte Carlo simulation (3,000 iterations) Â· ${data.playoffSpots} teams make playoffs Â· Week ${data.currentWeek}`}>Playoff Odds</SectionTitle>
 
 
       <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
@@ -1237,7 +1264,7 @@ function Playoffs({ data, derived }) {
             {sorted.map((t, i) => {
               const odds = playoffOdds[t.roster_id];
               const tSOS = sos[t.roster_id];
-              const sosLabel = tSOS == null ? '—' : tSOS.toFixed(1);
+              const sosLabel = tSOS == null ? 'â' : tSOS.toFixed(1);
               const sosNorm = tSOS == null ? 50 : ((tSOS - minSOS) / (maxSOS - minSOS)) * 100;
               return (
                 <tr key={t.roster_id} className="row-hover" style={{ borderTop: '1px solid #2a3441' }}>
@@ -1279,8 +1306,8 @@ function Playoffs({ data, derived }) {
         <div className="mono" style={{ fontSize: 10, color: '#8b95a3', letterSpacing: 1, marginBottom: 8 }}>METHODOLOGY</div>
         <div style={{ fontSize: 13, color: '#e8ecf0', lineHeight: 1.6 }}>
           Each team's projected PF/game is modeled as a normal distribution with ~22% variance.
-          The remaining schedule is simulated 3,000 times with random pairings (approximation — Sleeper doesn't expose future H2H matchups).
-          Strength of Schedule (SOS) shows opponents' average PF/game faced so far — higher = tougher schedule.
+          The remaining schedule is simulated 3,000 times with random pairings (approximation â Sleeper doesn't expose future H2H matchups).
+          Strength of Schedule (SOS) shows opponents' average PF/game faced so far â higher = tougher schedule.
         </div>
       </div>
     </div>
@@ -1354,7 +1381,7 @@ function Waivers({ data, derived }) {
                 </td>
                 <td style={cell}><PosBadge pos={p.pos} /></td>
                 <td style={{...cell, textAlign:'right'}} className="mono">{p.team || 'FA'}</td>
-                <td style={{...cell, textAlign:'right'}} className="mono">{p.age || '—'}</td>
+                <td style={{...cell, textAlign:'right'}} className="mono">{p.age || 'â'}</td>
                 <td className="mono" style={{...cell, textAlign:'right', color: '#d4a857'}}>{p.value.toLocaleString()}</td>
               </tr>
             ))}
@@ -1453,7 +1480,7 @@ function MatchupRow({ team, points, winner, played }) {
         </div>
       </div>
       <div className="mono" style={{ fontSize: 18, fontWeight: 600, color: !played ? '#8b95a3' : winner ? '#10b981' : '#e8ecf0' }}>
-        {played ? (points || 0).toFixed(1) : '—'}
+        {played ? (points || 0).toFixed(1) : 'â'}
       </div>
     </div>
   );
@@ -1467,7 +1494,7 @@ function DraftCapital({ data, derived }) {
 
   return (
     <div>
-      <SectionTitle sub="Pick values estimated from projected standings · future picks discounted for uncertainty">Draft Capital</SectionTitle>
+      <SectionTitle sub="Pick values estimated from projected standings Â· future picks discounted for uncertainty">Draft Capital</SectionTitle>
 
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1516,7 +1543,7 @@ function DraftCapital({ data, derived }) {
 }
 
 
-// ============ GALAXY (3D SIMILARITY MATRIX — FULL ROSTER + FA) ============
+// ============ GALAXY (3D SIMILARITY MATRIX â FULL ROSTER + FA) ============
 const POS_HEX = { QB: 0xef4444, RB: 0x10b981, WR: 0x3b82f6, TE: 0xf97316, K: 0x8b5cf6, DEF: 0x64748b };
 const POS_COLOR_CSS = { QB: '#ef4444', RB: '#10b981', WR: '#3b82f6', TE: '#f97316', K: '#8b5cf6', DEF: '#64748b' };
 
@@ -1678,7 +1705,7 @@ function Galaxy({ data, derived }) {
       playerGroup.add(mesh);
       playerMeshes.push(mesh);
 
-      // Glow halo — larger for high-value players
+      // Glow halo â larger for high-value players
       var glowRadius = radius * (p.isFA ? 2 : 3.5) * (1 + logVal*0.15);
       var glowGeo = new THREE.SphereGeometry(glowRadius, 8, 8);
       var opacity = p.isFA ? 0.08 : 0.18 + logVal*0.04;
@@ -1865,7 +1892,7 @@ function Galaxy({ data, derived }) {
 
   return (
     <div>
-      <SectionTitle sub={"3D dynasty similarity galaxy — " + universe.length + " players plotted. Position clusters emerge from PCA on age, value, rank & experience. Drag to orbit, scroll to zoom, click any star."}>
+      <SectionTitle sub={"3D dynasty similarity galaxy â " + universe.length + " players plotted. Position clusters emerge from PCA on age, value, rank & experience. Drag to orbit, scroll to zoom, click any star."}>
         Player Galaxy
       </SectionTitle>
 
@@ -1967,9 +1994,9 @@ function Galaxy({ data, derived }) {
                 {hovered.player.inj && <span className="mono" style={{fontSize:9, color:'#f87171'}}>{hovered.player.inj}</span>}
               </div>
               <div className="mono" style={{fontSize:10, color:'#8b95a3', lineHeight:1.6}}>
-                {hovered.player.team || 'FA'} · AGE {hovered.player.age || '?'} · EXP {hovered.player.exp||0}yr<br/>
-                <span style={{color:'#d4a857'}}>{hovered.player.value?.toLocaleString() || '—'} val</span>
-                {' · '}<span style={{color: hovered.player.isFA ? '#475569' : '#e8ecf0'}}>{hovered.player.owner}</span>
+                {hovered.player.team || 'FA'} Â· AGE {hovered.player.age || '?'} Â· EXP {hovered.player.exp||0}yr<br/>
+                <span style={{color:'#d4a857'}}>{hovered.player.value?.toLocaleString() || 'â'} val</span>
+                {' Â· '}<span style={{color: hovered.player.isFA ? '#475569' : '#e8ecf0'}}>{hovered.player.owner}</span>
               </div>
             </div>
           )}
@@ -1977,7 +2004,7 @@ function Galaxy({ data, derived }) {
           {/* Axis hint */}
           <div style={{position:'absolute', top:12, right:12, pointerEvents:'none'}}>
             <div className="mono" style={{fontSize:9, color:'#2a3441', letterSpacing:0.5, textAlign:'right', lineHeight:1.8}}>
-              DRAG · ORBIT<br/>SCROLL · ZOOM<br/>CLICK · SELECT
+              DRAG Â· ORBIT<br/>SCROLL Â· ZOOM<br/>CLICK Â· SELECT
             </div>
           </div>
         </div>
@@ -1995,15 +2022,15 @@ function Galaxy({ data, derived }) {
               </div>
               <div style={{fontSize:18, fontWeight:700, marginBottom:4}}>{selected.n}</div>
               <div className="mono" style={{fontSize:10, color:'#8b95a3', marginBottom:14, letterSpacing:0.5}}>
-                {selected.team||'FA'} · AGE {selected.age||'?'} · {selected.exp||0}YR EXP
+                {selected.team||'FA'} Â· AGE {selected.age||'?'} Â· {selected.exp||0}YR EXP
               </div>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14}}>
                 <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>DYN VALUE</div>
-                  <div className="mono" style={{fontSize:18, color:'#d4a857', fontWeight:700}}>{selected.value?.toLocaleString()||'—'}</div></div>
+                  <div className="mono" style={{fontSize:18, color:'#d4a857', fontWeight:700}}>{selected.value?.toLocaleString()||'â'}</div></div>
                 <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>OWNER</div>
                   <div style={{fontSize:12, fontWeight:600, marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', color: selected.isFA ? '#475569' : '#e8ecf0'}}>{selected.owner}</div></div>
                 <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>RANK</div>
-                  <div className="mono" style={{fontSize:13, color:'#e8ecf0'}}>{selected.rank < 9999 ? '#'+selected.rank : '—'}</div></div>
+                  <div className="mono" style={{fontSize:13, color:'#e8ecf0'}}>{selected.rank < 9999 ? '#'+selected.rank : 'â'}</div></div>
                 <div><div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1}}>AGE MULT</div>
                   <div className="mono" style={{fontSize:13, color:'#e8ecf0'}}>{(ageMultiplier(selected.pos, selected.age)*100).toFixed(0)}%</div></div>
               </div>
@@ -2024,7 +2051,7 @@ function Galaxy({ data, derived }) {
                       <div style={{width:6, height:6, borderRadius:'50%', background:col, flexShrink:0, boxShadow:'0 0 4px '+col}} />
                       <div style={{flex:1, minWidth:0}}>
                         <div style={{fontSize:12, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{n.n}</div>
-                        <div className="mono" style={{fontSize:9, color:'#8b95a3'}}>{n.pos} · {n.owner}</div>
+                        <div className="mono" style={{fontSize:9, color:'#8b95a3'}}>{n.pos} Â· {n.owner}</div>
                       </div>
                       <span className="mono" style={{fontSize:11, color:'#d4a857'}}>{n.value?.toLocaleString()}</span>
                     </div>
@@ -2040,10 +2067,10 @@ function Galaxy({ data, derived }) {
       <div className="card" style={{padding:16, marginTop:12}}>
         <div className="mono" style={{fontSize:9, color:'#8b95a3', letterSpacing:1, marginBottom:8}}>HOW THE GALAXY WORKS</div>
         <div style={{fontSize:12, color:'#e8ecf0', lineHeight:1.7}}>
-          Every player gets a 10-dimensional feature vector: position (one-hot ×5 weight), age, years of experience, dynasty value (log-scaled), search rank, and health.
-          Principal Component Analysis (PCA) compresses that into 3 axes of maximum variance — the three dimensions you navigate.
+          Every player gets a 10-dimensional feature vector: position (one-hot Ã5 weight), age, years of experience, dynasty value (log-scaled), search rank, and health.
+          Principal Component Analysis (PCA) compresses that into 3 axes of maximum variance â the three dimensions you navigate.
           Position weighting dominates axis 1, so QB/RB/WR/TE clusters form naturally at the corners. Within each cluster, age and value spread players out, so young elites float away from aging veterans.
-          The <strong style={{color:'#d4a857'}}>8 closest comps</strong> for any selected player are the nearest neighbors in the original 10D space — useful for finding trade equivalents.
+          The <strong style={{color:'#d4a857'}}>8 closest comps</strong> for any selected player are the nearest neighbors in the original 10D space â useful for finding trade equivalents.
           Use the FA slider to add more free agents to the galaxy, and the position filter to focus a cluster.
         </div>
       </div>
@@ -2075,11 +2102,373 @@ function ErrorScreen({ error, onRetry }) {
 }
 
 
+
+// == NEW FEATURES ==
+
+function LeagueHistory({ data, derived }) {
+  const [hd,setHd]=React.useState(null);const [ld,setLd]=React.useState(true);
+  React.useEffect(()=>{(async()=>{try{setLd(true);const s=[];let lid=LEAGUE_ID;
+    for(let i=0;i<6;i++){const lg=await api('/league/'+lid).catch(()=>null);if(!lg)break;
+      const ws=await api('/league/'+lid+'/winners_bracket').catch(()=>[]);
+      const ro=await api('/league/'+lid+'/rosters').catch(()=>[]);
+      const us=await api('/league/'+lid+'/users').catch(()=>[]);
+      const um=Object.fromEntries((us||[]).map(u=>[u.user_id,u.display_name]));
+      const rm=Object.fromEntries((ro||[]).map(r=>[r.roster_id,um[r.owner_id]||r.owner_id]));
+      const cg=(ws||[]).find(g=>g.r===3&&g.p===1);
+      s.push({season:lg.season,name:lg.name,champ:cg?(rm[cg.w]||'Unknown'):null,teams:(us||[]).length});
+      if(!lg.previous_league_id||lg.previous_league_id==='0')break;
+      lid=lg.previous_league_id;}
+    setHd(s);}catch(e){console.error(e);}finally{setLd(false);}})();},[]);
+  const {standings:st}=derived;const am=data.allMatchups||{};
+  const hi={sc:0,t:'',wk:0};const ts={};
+  Object.entries(am).forEach(([wk,ms])=>{(ms||[]).forEach(m=>{
+    const t=st.find(s=>s.roster_id===m.roster_id)?.team||'?';
+    if((m.points||0)>hi.sc){hi.sc=m.points;hi.t=t;hi.wk=wk;}
+    if(!ts[t])ts[t]=[];if(m.points>0)ts[t].push(m.points);
+  });});
+  const av=Object.entries(ts).map(([t,sc])=>({t,avg:sc.reduce((a,b)=>a+b,0)/sc.length,g:sc.length})).sort((a,b)=>b.avg-a.avg);
+  const sd=a=>{const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.map(x=>(x-m)**2).reduce((x,y)=>x+y,0)/a.length);};
+  const mc=av.reduce((bst,cur)=>{const sc=ts[cur.t]||[];if(sc.length<2)return bst;const d=sd(sc);return(!bst||d<bst.d)?{t:cur.t,d}:bst;},null);
+  return(<div>
+    <SectionTitle>League History &amp; Records</SectionTitle>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:28}}>
+      <StatCard label="Top Score" value={hi.sc>0?hi.sc.toFixed(2):'N/A'} sub={hi.t?hi.t+' Wk'+hi.wk:'No data'} accent="#d4a857"/>
+      <StatCard label="Most Consistent" value={mc?mc.t:'N/A'} sub={mc?'±'+mc.d.toFixed(1)+' std dev':'No data'} accent="#10b981"/>
+      <StatCard label="Best Avg Score" value={av[0]?av[0].t:'N/A'} sub={av[0]?av[0].avg.toFixed(1)+' pts/game':'No data'} accent="#6366f1"/>
+      <StatCard label="Season" value={data.currentSeason} sub={data.league.name} accent="#f59e0b"/>
+    </div>
+    <SectionTitle>Past Champions</SectionTitle>
+    <div className="card" style={{marginBottom:28}}>
+      {ld?<div style={{padding:32,textAlign:'center',color:'#8b95a3'}}>Loading...</div>
+      :(hd&&hd.length>0)?(<table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Season</Th><Th>Champion</Th><Th>League</Th><Th align="right">Teams</Th></tr></thead>
+        <tbody>{hd.map(s=><tr key={s.season} style={{borderBottom:'1px solid #2a3441'}}>
+          <Td><span className="mono" style={{color:'#d4a857'}}>{s.season}</span></Td>
+          <Td><span style={{fontWeight:600}}>{s.champ||'-'}</span></Td>
+          <Td style={{color:'#8b95a3'}}>{s.name}</Td>
+          <Td align="right"><span className="mono">{s.teams}</span></Td>
+        </tr>)}</tbody>
+      </table>):<div style={{padding:24,textAlign:'center',color:'#8b95a3'}}>No previous history found yet.</div>}
+    </div>
+    <SectionTitle>Scoring Leaders</SectionTitle>
+    <div className="card" style={{overflow:'hidden'}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>#</Th><Th>Team</Th><Th align="right">Avg Pts</Th><Th align="right">Games</Th></tr></thead>
+        <tbody>{av.length>0?av.map((r,i)=><tr key={r.t} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td><span className="mono" style={{color:'#475569'}}>{i+1}</span></Td>
+          <Td><span style={{fontWeight:600}}>{r.t}</span></Td>
+          <Td align="right"><span className="mono" style={{color:'#d4a857'}}>{r.avg.toFixed(1)}</span></Td>
+          <Td align="right"><span className="mono">{r.g}</span></Td>
+        </tr>):<tr><td colSpan={4} style={{padding:24,textAlign:'center',color:'#8b95a3'}}>No game data yet.</td></tr>}</tbody>
+      </table>
+    </div>
+  </div>);
+}
+
+function SeasonAnalytics({ data, derived }) {
+  const {standings:st}=derived;const am=data.allMatchups||{};const cw=data.currentWeek;
+  const tw={};st.forEach(s=>{tw[s.roster_id]={};});
+  Object.entries(am).forEach(([wk,ms])=>{(ms||[]).forEach(m=>{if(tw[m.roster_id]!==undefined)tw[m.roster_id][wk]=m.points||0;});});
+  const ts=st.map(s=>{
+    const sc=Object.values(tw[s.roster_id]||{}).filter(v=>v>0);
+    const avg=sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:0;
+    const mx=sc.length?Math.max(...sc):0,mn=sc.length?Math.min(...sc):0;
+    const sd=sc.length>1?Math.sqrt(sc.map(x=>(x-avg)**2).reduce((a,b)=>a+b,0)/sc.length):0;
+    let lw=0;
+    Object.entries(am).forEach(([wk,wms])=>{
+      const ws=(wms||[]).map(m=>m.points||0).filter(v=>v>0);if(!ws.length)return;
+      const med=[...ws].sort((a,b)=>a-b)[Math.floor(ws.length/2)];
+      const my=tw[s.roster_id][wk];if(my===undefined)return;
+      const mm=(wms||[]).find(m=>m.roster_id===s.roster_id);
+      const om=(wms||[]).find(m=>m.matchup_id===mm?.matchup_id&&m.roster_id!==s.roster_id);
+      if(!mm||!om)return;
+      lw+=(mm.points>om.points?1:0)-(my>med?1:0);
+    });
+    return {...s,avg,mx,mn,sd,lw};
+  });
+  const bA=[...ts].sort((a,b)=>b.avg-a.avg);const bL=[...ts].sort((a,b)=>b.lw-a.lw);
+  const wp=Object.keys(am).filter(w=>Object.values(am[w]||{}).some(m=>(m.points||0)>0)).length;
+  return(<div>
+    <SectionTitle>Season Analytics</SectionTitle>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:28}}>
+      <StatCard label="Luckiest" value={bL[0]?.team||'N/A'} sub={bL[0]?'+'+bL[0].lw.toFixed(1)+' lucky wins':''} accent="#f59e0b"/>
+      <StatCard label="Unluckiest" value={bL[bL.length-1]?.team||'N/A'} sub={bL[bL.length-1]?bL[bL.length-1].lw.toFixed(1)+' wins':''} accent="#dc2626"/>
+      <StatCard label="Best Avg" value={bA[0]?.team||'N/A'} sub={bA[0]?bA[0].avg.toFixed(1)+' pts/wk':''} accent="#10b981"/>
+      <StatCard label="Weeks Played" value={wp} sub={'of '+data.regSeasonWeeks} accent="#6366f1"/>
+    </div>
+    <SectionTitle>Consistency &amp; Luck</SectionTitle>
+    <div className="card" style={{overflow:'hidden',marginBottom:28}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Team</Th><Th align="right">Avg</Th><Th align="right">Max</Th><Th align="right">Min</Th><Th align="right">Std Dev</Th><Th align="right">Luck</Th></tr></thead>
+        <tbody>{bA.map(t=><tr key={t.roster_id} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td><span style={{fontWeight:600}}>{t.team}</span></Td>
+          <Td align="right"><span className="mono" style={{color:'#d4a857'}}>{t.avg>0?t.avg.toFixed(1):'-'}</span></Td>
+          <Td align="right"><span className="mono" style={{color:'#10b981'}}>{t.mx>0?t.mx.toFixed(1):'-'}</span></Td>
+          <Td align="right"><span className="mono" style={{color:'#dc2626'}}>{t.mn>0?t.mn.toFixed(1):'-'}</span></Td>
+          <Td align="right"><span className="mono">{t.sd>0?t.sd.toFixed(1):'-'}</span></Td>
+          <Td align="right"><span className="mono" style={{color:t.lw>0?'#10b981':t.lw<0?'#dc2626':'#8b95a3'}}>{t.lw>0?'+':''}{t.lw.toFixed(1)}</span></Td>
+        </tr>)}{bA.length===0&&<tr><td colSpan={6} style={{padding:24,textAlign:'center',color:'#8b95a3'}}>No scoring data yet.</td></tr>}</tbody>
+      </table>
+    </div>
+    <SectionTitle>Weekly Scores</SectionTitle>
+    <div style={{overflowX:'auto'}}><div className="card" style={{overflow:'hidden'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',minWidth:500}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Team</Th>{Array.from({length:Math.min(cw,data.regSeasonWeeks)},(_,i)=><Th key={i+1} align="right" style={{fontSize:10}}>W{i+1}</Th>)}</tr></thead>
+        <tbody>{st.map(s=><tr key={s.roster_id} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td><span style={{fontWeight:600,fontSize:12}}>{s.team}</span></Td>
+          {Array.from({length:Math.min(cw,data.regSeasonWeeks)},(_,i)=>{const sc=tw[s.roster_id][i+1];return <Td key={i+1} align="right"><span className="mono" style={{fontSize:11,color:sc>0?'#e8ecf0':'#475569'}}>{sc>0?sc.toFixed(0):'-'}</span></Td>;})}
+        </tr>)}</tbody>
+      </table>
+    </div></div>
+  </div>);
+}
+
+function HeadToHead({ data, derived }) {
+  const {standings:st}=derived;const am=data.allMatchups||{};
+  const [tA,setA]=React.useState(st[0]?.roster_id||null);
+  const [tB,setB]=React.useState(st[1]?.roster_id||null);
+  const rec=React.useMemo(()=>{
+    if(!tA||!tB)return null;let aW=0,bW=0,gs=[];
+    Object.entries(am).forEach(([wk,wms])=>{
+      const a=(wms||[]).find(m=>m.roster_id===parseInt(tA));
+      const b=(wms||[]).find(m=>m.roster_id===parseInt(tB));
+      if(!a||!b||a.matchup_id!==b.matchup_id||(a.points||0)===0&&(b.points||0)===0)return;
+      const aw=a.points>b.points;if(aw)aW++;else bW++;
+      gs.push({wk:parseInt(wk),as:a.points,bs:b.points,aw});
+    });return {aW,bW,gs};
+  },[tA,tB,am]);
+  const ai=st.find(s=>s.roster_id===parseInt(tA));const bi=st.find(s=>s.roster_id===parseInt(tB));
+  const ss={background:'#1c2530',border:'1px solid #2a3441',color:'#e8ecf0',padding:'8px 12px',borderRadius:4,fontSize:13,flex:1};
+  return(<div>
+    <SectionTitle>Head-to-Head History</SectionTitle>
+    <div className="card" style={{marginBottom:24}}>
+      <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap',marginBottom:20}}>
+        <select style={ss} value={tA} onChange={e=>setA(parseInt(e.target.value))}>{st.map(s=><option key={s.roster_id} value={s.roster_id}>{s.team}</option>)}</select>
+        <span style={{color:'#d4a857',fontWeight:700,fontSize:18}}>VS</span>
+        <select style={ss} value={tB} onChange={e=>setB(parseInt(e.target.value))}>{st.filter(s=>s.roster_id!==parseInt(tA)).map(s=><option key={s.roster_id} value={s.roster_id}>{s.team}</option>)}</select>
+      </div>
+      {rec&&(<><div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',gap:20,alignItems:'center',marginBottom:24,padding:'20px 0',borderTop:'1px solid #2a3441',borderBottom:'1px solid #2a3441'}}>
+        <div style={{textAlign:'center'}}><div style={{fontSize:13,color:'#8b95a3',marginBottom:8}}>{ai?.team}</div><div style={{fontSize:48,fontFamily:'Anton,sans-serif',color:rec.aW>rec.bW?'#10b981':'#e8ecf0'}}>{rec.aW}</div><div style={{fontSize:11,color:'#8b95a3'}}>wins</div></div>
+        <div style={{textAlign:'center',color:'#475569',fontSize:12}}>{rec.gs.length} meetings</div>
+        <div style={{textAlign:'center'}}><div style={{fontSize:13,color:'#8b95a3',marginBottom:8}}>{bi?.team}</div><div style={{fontSize:48,fontFamily:'Anton,sans-serif',color:rec.bW>rec.aW?'#10b981':'#e8ecf0'}}>{rec.bW}</div><div style={{fontSize:11,color:'#8b95a3'}}>wins</div></div>
+      </div>
+      {rec.gs.length>0?(<table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Week</Th><Th align="right">{ai?.team}</Th><Th align="center">Result</Th><Th align="right">{bi?.team}</Th></tr></thead>
+        <tbody>{rec.gs.map(g=><tr key={g.wk} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td><span className="mono" style={{color:'#8b95a3'}}>Wk {g.wk}</span></Td>
+          <Td align="right"><span className="mono" style={{fontWeight:g.aw?700:400,color:g.aw?'#10b981':'#e8ecf0'}}>{g.as?.toFixed(2)}</span></Td>
+          <Td align="center"><span style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:g.aw?'#10b98120':'#dc262620',color:g.aw?'#10b981':'#dc2626'}}>{g.aw?'A':'B'} WIN</span></Td>
+          <Td align="right"><span className="mono" style={{fontWeight:!g.aw?700:400,color:!g.aw?'#10b981':'#e8ecf0'}}>{g.bs?.toFixed(2)}</span></Td>
+        </tr>)}</tbody>
+      </table>):<div style={{padding:24,textAlign:'center',color:'#8b95a3'}}>No matchups yet.</div>}</>)}
+    </div>
+    <SectionTitle>Record Matrix</SectionTitle>
+    <div style={{overflowX:'auto'}}><div className="card" style={{overflow:'hidden'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+        <thead><tr style={{background:'#1c2530'}}><Th style={{fontSize:10}}>Team</Th>{st.map(s=><Th key={s.roster_id} align="center" style={{fontSize:9,padding:'8px 4px'}}>{s.team.substring(0,7)}</Th>)}</tr></thead>
+        <tbody>{st.map(rt=><tr key={rt.roster_id} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td style={{fontSize:11,fontWeight:600}}>{rt.team}</Td>
+          {st.map(ct=>{
+            if(rt.roster_id===ct.roster_id)return<Td key={ct.roster_id} align="center" style={{background:'#1c2530',color:'#475569'}}>-</Td>;
+            let w=0,l=0;Object.values(am).forEach(wm=>{const m1=(wm||[]).find(m=>m.roster_id===rt.roster_id);const m2=(wm||[]).find(m=>m.roster_id===ct.roster_id);if(!m1||!m2||m1.matchup_id!==m2.matchup_id||(m1.points||0)===0&&(m2.points||0)===0)return;if(m1.points>m2.points)w++;else l++;});
+            if(w+l===0)return<Td key={ct.roster_id} align="center" style={{color:'#475569',fontSize:10}}>-</Td>;
+            return<Td key={ct.roster_id} align="center" style={{fontSize:10}}><span style={{color:w>l?'#10b981':'#dc2626'}}>{w}-{l}</span></Td>;
+          })}
+        </tr>)}</tbody>
+      </table>
+    </div></div>
+  </div>);
+}
+
+function ContentionWindow({ data, derived }) {
+  const {standings:st,powerRankings:pr,playoffOdds:po}=derived;
+  const ra=st.map(s=>{
+    const sa=(s.starters||[]).map(pid=>{const p=data.players[pid];return p?.age||null;}).filter(Boolean);
+    const aa=sa.length?sa.reduce((a,b)=>a+b,0)/sa.length:null;
+    const tv=pr.find(p=>p.roster_id===s.roster_id)?.totalValue||0;
+    const od=po[s.roster_id]?.playoff||0;
+    let lb,cl;
+    if(aa===null){lb='Unknown';cl='#475569';}
+    else if(aa<25&&tv>45000){lb='Dynasty Core';cl='#6366f1';}
+    else if(aa<26){lb='Rebuilding';cl='#f59e0b';}
+    else if(aa<28&&tv>40000){lb='Rising';cl='#10b981';}
+    else if(aa>=28&&od>50){lb='Win Now';cl='#dc2626';}
+    else if(aa>=28){lb='Aging';cl='#ef4444';}
+    else{lb='Contending';cl='#10b981';}
+    return {...s,aa,tv,od,lb,cl};
+  }).sort((a,b)=>(b.aa||0)-(a.aa||0));
+  const pc={'Win Now':'#dc2626','Contending':'#10b981','Rising':'#10b981','Dynasty Core':'#6366f1','Rebuilding':'#f59e0b','Aging':'#ef4444'};
+  return(<div>
+    <SectionTitle>Contention Window</SectionTitle>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:12,marginBottom:28}}>
+      {['Win Now','Contending','Rising','Dynasty Core','Rebuilding','Aging'].map(ph=>{
+        const cnt=ra.filter(t=>t.lb===ph).length;
+        return<div key={ph} className="card" style={{padding:16,borderLeft:'3px solid '+(pc[ph]||'#8b95a3')}}>
+          <div style={{fontSize:11,fontWeight:700,color:pc[ph]||'#8b95a3',textTransform:'uppercase',letterSpacing:0.5}}>{ph}</div>
+          <div style={{fontSize:32,fontFamily:'Anton,sans-serif',color:'#e8ecf0',marginTop:4}}>{cnt}</div>
+          <div style={{fontSize:11,color:'#8b95a3'}}>team{cnt!==1?'s':''}</div>
+        </div>;
+      })}
+    </div>
+    <SectionTitle>Team Breakdown</SectionTitle>
+    <div className="card" style={{overflow:'hidden',marginBottom:16}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Team</Th><Th align="center">Phase</Th><Th align="right">Avg Starter Age</Th><Th align="right">Value</Th><Th align="right">Playoff %</Th></tr></thead>
+        <tbody>{ra.map(t=><tr key={t.roster_id} style={{borderBottom:'1px solid #1c2530'}}>
+          <Td><span style={{fontWeight:600}}>{t.team}</span></Td>
+          <Td align="center"><span style={{fontSize:11,padding:'3px 10px',borderRadius:4,background:t.cl+'20',color:t.cl,fontWeight:600}}>{t.lb}</span></Td>
+          <Td align="right"><span className="mono">{t.aa?t.aa.toFixed(1):'-'}</span></Td>
+          <Td align="right"><span className="mono" style={{color:'#d4a857'}}>{t.tv.toLocaleString()}</span></Td>
+          <Td align="right"><span className="mono" style={{color:t.od>60?'#10b981':t.od>30?'#d4a857':'#8b95a3'}}>{t.od.toFixed(1)}%</span></Td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+    <div style={{padding:'12px 16px',background:'#1c2530',borderRadius:6,fontSize:12,color:'#8b95a3'}}>
+      <strong style={{color:'#d4a857'}}>Guide:</strong> Win Now = 28+ age + strong playoff odds · Contending = competitive · Rising = young + value · Dynasty Core = very young high value · Rebuilding = building · Aging = older roster
+    </div>
+  </div>);
+}
+
+function NewsAndMoves({ data, derived }) {
+  const {standings:st}=derived;
+  const [txns,setTxns]=React.useState([]);const [ld,setLd]=React.useState(true);const [filt,setFilt]=React.useState('all');
+  React.useEffect(()=>{(async()=>{setLd(true);try{
+    const all=[];const wc=Math.min(data.currentWeek,data.regSeasonWeeks);
+    for(let w=Math.max(1,wc-4);w<=wc;w++){const t=await api('/league/'+LEAGUE_ID+'/transactions/'+w).catch(()=>[]);(t||[]).forEach(x=>all.push({...x,week:w}));}
+    all.sort((a,b)=>(b.status_updated||0)-(a.status_updated||0));setTxns(all);
+  }catch(e){console.error(e);}finally{setLd(false);}})();},[]);
+  const gt=rid=>st.find(s=>s.roster_id===rid)?.team||'Team '+rid;
+  const gp=pid=>{const p=data.players[pid];if(!p)return pid;return (p.first_name?p.first_name[0]+'. ':'')+(p.last_name||pid);};
+  const tl={trade:'Trade',free_agent:'FA Pickup',waiver:'Waiver',commissioner:'Commissioner'};
+  const tc={trade:'#d4a857',free_agent:'#10b981',waiver:'#6366f1',commissioner:'#f59e0b'};
+  const ft=filt==='all'?txns:txns.filter(t=>t.type===filt);
+  return(<div>
+    <SectionTitle>News &amp; Moves</SectionTitle>
+    <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+      {['all','trade','free_agent','waiver'].map(type=>(
+        <button key={type} onClick={()=>setFilt(type)} style={{background:filt===type?'#d4a857':'#1c2530',border:'1px solid '+(filt===type?'#d4a857':'#2a3441'),color:filt===type?'#0a0d12':'#e8ecf0',padding:'6px 14px',borderRadius:4,fontSize:12,fontWeight:600,cursor:'pointer'}}>
+          {type==='all'?'All':(tl[type]||type)}
+        </button>
+      ))}
+    </div>
+    {ld?<div className="card" style={{padding:32,textAlign:'center',color:'#8b95a3'}}>Loading transactions...</div>
+    :ft.length===0?<div className="card" style={{padding:32,textAlign:'center',color:'#8b95a3'}}>No transactions found.</div>
+    :(<div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {ft.slice(0,50).map((txn,i)=>{
+        const dt=txn.status_updated?new Date(txn.status_updated).toLocaleDateString():'';
+        const adds=Object.keys(txn.adds||{});const drops=Object.keys(txn.drops||{});
+        return(<div key={txn.transaction_id||i} className="card" style={{padding:'14px 16px',borderLeft:'3px solid '+(tc[txn.type]||'#475569'),opacity:txn.status==='complete'?1:0.6}}>
+          <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginBottom:8}}>
+            <span style={{fontSize:11,padding:'2px 8px',borderRadius:4,background:(tc[txn.type]||'#475569')+'20',color:tc[txn.type]||'#8b95a3',fontWeight:700,textTransform:'uppercase'}}>{tl[txn.type]||txn.type}</span>
+            <span className="mono" style={{fontSize:10,color:'#475569'}}>Wk {txn.week} · {dt}</span>
+          </div>
+          {txn.type==='trade'?(
+            <div style={{fontSize:12,color:'#8b95a3'}}>{(txn.roster_ids||[]).map(rid=><span key={rid} style={{marginRight:6,color:'#e8ecf0',fontWeight:600}}>{gt(rid)}</span>)}<span> traded </span>{Object.entries(txn.adds||{}).slice(0,4).map(([pid])=><span key={pid} style={{marginLeft:4,color:'#d4a857'}}>{gp(pid)}</span>)}</div>
+          ):(<div style={{fontSize:12}}>
+            {adds.length>0&&<div style={{marginBottom:4}}><span style={{color:'#10b981'}}>+ {adds.slice(0,3).map(gp).join(', ')}</span>{adds.length>3&&<span style={{color:'#8b95a3'}}> +{adds.length-3} more</span>}<span style={{color:'#8b95a3',marginLeft:6}}>→ {gt(txn.adds[adds[0]])}</span></div>}
+            {drops.length>0&&<div><span style={{color:'#dc2626'}}>- {drops.slice(0,3).map(gp).join(', ')}</span>{drops.length>3&&<span style={{color:'#8b95a3'}}> +{drops.length-3} more</span>}</div>}
+          </div>)}
+        </div>);
+      })}
+      {ft.length>50&&<div style={{textAlign:'center',color:'#8b95a3',fontSize:12,padding:12}}>Showing 50 most recent</div>}
+    </div>)}
+  </div>);
+}
+
+function ToiletBowl({ data, derived }) {
+  const {standings:st,playoffOdds:po}=derived;const am=data.allMatchups||{};
+  const bt=[...st].sort((a,b)=>{const ag=a.wins+a.losses,bg=b.wins+b.losses;return (ag?a.wins/ag:0)-(bg?b.wins/bg:0)||a.pf-b.pf;});
+  const to=st.map(s=>({...s,to:Math.max(0,100-(po[s.roster_id]?.playoff||0))})).sort((a,b)=>b.to-a.to);
+  return(<div>
+    <SectionTitle>Toilet Bowl Tracker</SectionTitle>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:28}}>
+      <StatCard label="Last Place" value={bt[0]?.team||'N/A'} sub={bt[0]?bt[0].wins+'-'+bt[0].losses+' · '+bt[0].pf.toFixed(1)+' PF':''} accent="#dc2626"/>
+      <StatCard label="Toilet Bowl Favorite" value={to[0]?.team||'N/A'} sub={to[0]?to[0].to.toFixed(1)+'% miss playoffs':''} accent="#ef4444"/>
+      <StatCard label="Weeks Left" value={Math.max(0,data.regSeasonWeeks-data.currentWeek+1)} sub="regular season" accent="#f59e0b"/>
+      <StatCard label="Stakes" value="Pick 1" sub="worst record = first pick" accent="#8b95a3"/>
+    </div>
+    <SectionTitle>Bottom Standings</SectionTitle>
+    <div className="card" style={{overflow:'hidden',marginBottom:28}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>#</Th><Th>Team</Th><Th align="right">W-L</Th><Th align="right">PF</Th><Th align="right">PA</Th><Th align="right">Miss Playoff %</Th></tr></thead>
+        <tbody>{bt.map((t,i)=><tr key={t.roster_id} style={{borderBottom:'1px solid #1c2530',background:i<4?'#dc262608':'transparent'}}>
+          <Td><span className="mono" style={{color:i===0?'#dc2626':'#475569',fontWeight:i<2?700:400}}>{i+1}</span></Td>
+          <Td><span style={{fontWeight:i<2?700:400,color:i<2?'#ef4444':'#e8ecf0'}}>{t.team}</span>{i===0&&<span style={{marginLeft:8,fontSize:10,color:'#dc2626',fontWeight:700}}>LAST</span>}</Td>
+          <Td align="right"><span className="mono">{t.wins}-{t.losses}</span></Td>
+          <Td align="right"><span className="mono">{t.pf.toFixed(1)}</span></Td>
+          <Td align="right"><span className="mono">{t.pa.toFixed(1)}</span></Td>
+          <Td align="right"><span className="mono" style={{color:i<4?'#dc2626':'#8b95a3'}}>{to.find(x=>x.roster_id===t.roster_id)?.to.toFixed(1)}%</span></Td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+    <SectionTitle>Shame Board</SectionTitle>
+    <div className="card" style={{overflow:'hidden'}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Week</Th><Th>Lowest Score</Th><Th align="right">Points</Th></tr></thead>
+        <tbody>
+          {Object.entries(am).filter(([,wm])=>(wm||[]).some(m=>(m.points||0)>0)).map(([wk,wms])=>{
+            const sc=(wms||[]).filter(m=>m.points>0);if(!sc.length)return null;
+            const lo=sc.reduce((mn,m)=>m.points<mn.points?m:mn,sc[0]);
+            const tm=st.find(s=>s.roster_id===lo.roster_id)?.team||'?';
+            return<tr key={wk} style={{borderBottom:'1px solid #1c2530'}}><Td><span className="mono" style={{color:'#8b95a3'}}>Wk {wk}</span></Td><Td><span style={{color:'#dc2626'}}>{tm}</span></Td><Td align="right"><span className="mono" style={{color:'#ef4444'}}>{lo.points.toFixed(2)}</span></Td></tr>;
+          }).filter(Boolean)}
+          {Object.keys(am).length===0&&<tr><td colSpan={3} style={{padding:24,textAlign:'center',color:'#8b95a3'}}>No games yet.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  </div>);
+}
+
+function Commissioner({ data, derived }) {
+  const {standings:st,powerRankings:pr,playoffOdds:po}=derived;
+  const [note,setNote]=React.useState(()=>localStorage.getItem('commish_note')||'');
+  const [sv,setSv]=React.useState(false);
+  const save=()=>{localStorage.setItem('commish_note',note);setSv(true);setTimeout(()=>setSv(false),2000);};
+  const am=data.allMatchups||{};
+  const avg=st.reduce((s,t)=>s+t.pf,0)/st.length;
+  let cg=0;Object.values(am).forEach(wm=>{const sc=(wm||[]).filter(m=>m.points>0);const seen={};sc.forEach(m=>{const o=sc.find(x=>x.matchup_id===m.matchup_id&&x.roster_id!==m.roster_id);const k=[m.roster_id,o?.roster_id].sort().join('-');if(o&&!seen[k]){seen[k]=true;if(Math.abs(m.points-o.points)<10)cg++;}});});
+  let bm=null;Object.entries(am).forEach(([wk,wm])=>{const sc=(wm||[]).filter(m=>m.points>0);const seen={};sc.forEach(m=>{const o=sc.find(x=>x.matchup_id===m.matchup_id&&x.roster_id!==m.roster_id);const k=[m.roster_id,o?.roster_id].sort().join('-');if(o&&!seen[k]){seen[k]=true;const d=Math.abs(m.points-o.points);if(!bm||d<bm.d)bm={wk,d,tA:st.find(s=>s.roster_id===m.roster_id)?.team,tB:st.find(s=>s.roster_id===o.roster_id)?.team};}});});
+  const is={background:'#1c2530',border:'1px solid #2a3441',color:'#e8ecf0',padding:'10px 12px',borderRadius:4,fontSize:13,width:'100%',fontFamily:'DM Sans,sans-serif',resize:'vertical'};
+  return(<div>
+    <SectionTitle>Commissioner Tools</SectionTitle>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:12,marginBottom:28}}>
+      <StatCard label="League" value={st.length+' Teams'} sub={data.isSuperflex?'Superflex · Dynasty':'1QB · Dynasty'} accent="#6366f1"/>
+      <StatCard label="Avg Score" value={avg.toFixed(1)} sub="pts per team" accent="#d4a857"/>
+      <StatCard label="Close Games" value={cg} sub="decided by <10 pts" accent="#10b981"/>
+      <StatCard label="Closest Game" value={bm?bm.d.toFixed(2)+' pts':'N/A'} sub={bm?'Wk '+bm.wk+': '+(bm.tA||'').substring(0,8)+' vs '+(bm.tB||'').substring(0,8):''} accent="#f59e0b"/>
+    </div>
+    <SectionTitle>League Notes</SectionTitle>
+    <div className="card" style={{marginBottom:24}}>
+      <div style={{fontSize:12,color:'#8b95a3',marginBottom:10}}>Saved in your browser. Use for announcements, house rules, trade notes.</div>
+      <textarea value={note} onChange={e=>setNote(e.target.value)} style={{...is,minHeight:120}} placeholder="Commissioner notes, announcements, house rules..."/>
+      <div style={{display:'flex',justifyContent:'flex-end',marginTop:10}}>
+        <button onClick={save} style={{background:sv?'#10b981':'#d4a857',color:'#0a0d12',border:'none',padding:'8px 20px',borderRadius:4,fontWeight:700,fontSize:13,cursor:'pointer'}}>{sv?'✓ Saved':'Save'}</button>
+      </div>
+    </div>
+    <SectionTitle>Team Summary</SectionTitle>
+    <div className="card" style={{overflow:'hidden'}}>
+      <table style={{width:'100%',borderCollapse:'collapse'}}>
+        <thead><tr style={{background:'#1c2530'}}><Th>Team</Th><Th>Manager</Th><Th align="right">Record</Th><Th align="right">PF</Th><Th align="right">PR</Th><Th align="right">Playoff %</Th></tr></thead>
+        <tbody>{st.map(s=>{
+          const rnk=pr.findIndex(p=>p.roster_id===s.roster_id)+1;const od=po[s.roster_id]?.playoff||0;
+          return<tr key={s.roster_id} style={{borderBottom:'1px solid #1c2530'}}>
+            <Td><span style={{fontWeight:600}}>{s.team}</span></Td>
+            <Td><span style={{color:'#8b95a3',fontSize:12}}>{s.user}</span></Td>
+            <Td align="right"><span className="mono">{s.wins}-{s.losses}</span></Td>
+            <Td align="right"><span className="mono">{s.pf.toFixed(1)}</span></Td>
+            <Td align="right"><span className="mono" style={{color:rnk<=4?'#10b981':'#8b95a3'}}>#{rnk}</span></Td>
+            <Td align="right"><span className="mono" style={{color:od>60?'#10b981':od>30?'#d4a857':'#dc2626'}}>{od.toFixed(1)}%</span></Td>
+          </tr>;
+        })}</tbody>
+      </table>
+    </div>
+  </div>);
+}
 function Footer() {
   return (
     <div style={{ borderTop: '1px solid #2a3441', padding: '20px', maxWidth: 1400, margin: '0 auto', textAlign: 'center' }}>
       <div className="mono" style={{ fontSize: 10, color: '#475569', letterSpacing: 1 }}>
-        DATA · SLEEPER API · DYNASTY VALUES ARE HEURISTIC ESTIMATES
+        DATA Â· SLEEPER API Â· DYNASTY VALUES ARE HEURISTIC ESTIMATES
       </div>
     </div>
   );
